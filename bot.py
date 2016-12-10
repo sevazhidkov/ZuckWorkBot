@@ -123,7 +123,42 @@ class Bot:
             ), reply_markup=telegram.InlineKeyboardMarkup(keyboard), parse_mode='markdown')
 
     def process_callback_query(self, query):
-        print(query)
+        result = json.loads(self.redis.get('user:{}:program'.format(query.from_user.id)).decode('utf-8'))
+        if query.data == 'next':
+            program = json.loads(
+                self.redis.get('user:{}:program'.format(query.from_user.id)).decode('utf-8')
+            )
+            cur = int(self.redis.get('user:{}:cur'.format(query.from_user.id))) + 1
+        elif query.data == 'previous':
+            program = json.loads(
+                self.redis.get('user:{}:program'.format(query.from_user.id)).decode('utf-8')
+            )
+            cur = int(self.redis.get('user:{}:cur'.format(query.from_user.id))) - 1
+        bot.telegram.editMessageText(
+            text=COURSE_MESSAGE.format(
+                title=result[cur]['title'],
+                time=result[cur]['time'],
+                language=result[cur]['language'],
+                link=result[cur]['link']
+            ),
+            parse_mode=telegram.ParseMode.MARKDOWN,
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            disable_web_page_preview=True
+        )
+        keyboard = [[telegram.InlineKeyboardButton('Посетить курс 🌐', url=result[cur]['link'])],
+                    []]
+        if cur != 0:
+            keyboard[1].append(telegram.InlineKeyboardButton(PREVIOUS_BUTTON, callback_data='previous'))
+        if cur != len(result) - 1:
+            keyboard[1].append(telegram.InlineKeyboardButton(NEXT_BUTTON, callback_data='next'))
+        bot.telegram.editMessageReplyMarkup(
+            reply_markup=telegram.InlineKeyboardMarkup(keyboard),
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id
+        )
+        self.redis.set('user:{}:cur'.format(query.from_user.id), cur)
+        self.telegram.answerCallbackQuery(callback_query_id=query.id)
 
 
 telegram_client = telegram.Bot(os.environ['BOT_TOKEN'])
