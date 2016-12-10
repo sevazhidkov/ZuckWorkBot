@@ -1,6 +1,9 @@
 import os
+import sys
 import json
+
 import redis
+import flask
 import telegram
 
 from api import BackendApi
@@ -9,6 +12,8 @@ NEXT_BUTTON = 'Далее ➡️'
 PREVIOUS_BUTTON = 'Назад ⬅️'
 THATS_ALL_BUTTON = 'Всё, я выбрал ✅'
 COURSE_MESSAGE = '*{title}*\n\n🕙 Время: _{time}_\n💬 Язык: _{language}_\n\n{link}'
+
+app = flask.Flask(__name__)
 
 
 class Bot:
@@ -161,6 +166,13 @@ class Bot:
         self.telegram.answerCallbackQuery(callback_query_id=query.id)
 
 
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    update = telegram.Update.de_json(flask.request.get_json(force=True), bot.telegram)
+    bot.process_update(update)
+    return 'ok'
+
+
 telegram_client = telegram.Bot(os.environ['BOT_TOKEN'])
 bot = Bot(telegram_client)
 
@@ -170,10 +182,12 @@ try:
 except IndexError:
     update_id = None
 
-while True:
-    try:
-        for update in telegram_client.getUpdates(offset=update_id, timeout=10):
-            update_id = update.update_id + 1
-            bot.process_update(update)
-    except telegram.error.Unauthorized:
-        update_id += 1
+if len(sys.argv) > 1 and sys.argv[1] == 'polling':
+    while True:
+        try:
+            for update in telegram_client.getUpdates(offset=update_id, timeout=10):
+                update_id = update.update_id + 1
+                bot.process_update(update)
+        except (telegram.error.Unauthorized, telegram.error.BadRequest):
+            update_id += 1
+    exit()
