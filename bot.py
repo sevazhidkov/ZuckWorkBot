@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import json
 
 import redis
@@ -192,4 +193,8 @@ if len(sys.argv) > 1 and sys.argv[1] == 'polling':
             update_id += 1
     exit()
 
-bot.telegram.setWebhook('https://zuckworkbot.herokuapp.com/webhook')
+try:
+    bot.telegram.setWebhook('https://zuckworkbot.herokuapp.com/webhook')
+except telegram.error.RetryAfter:
+    time.sleep(1)
+    bot.telegram.setWebhook('https://zuckworkbot.herokuapp.com/webhook')
