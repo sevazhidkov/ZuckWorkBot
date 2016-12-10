@@ -176,13 +176,13 @@ def webhook():
 telegram_client = telegram.Bot(os.environ['BOT_TOKEN'])
 bot = Bot(telegram_client)
 
-bot.telegram.setWebhook('')
-try:
-    update_id = telegram_client.getUpdates()[0].update_id
-except IndexError:
-    update_id = None
-
 if len(sys.argv) > 1 and sys.argv[1] == 'polling':
+    bot.telegram.setWebhook('')
+    try:
+        update_id = telegram_client.getUpdates()[0].update_id
+    except IndexError:
+        update_id = None
+
     while True:
         try:
             for update in telegram_client.getUpdates(offset=update_id, timeout=10):
@@ -191,3 +191,5 @@ if len(sys.argv) > 1 and sys.argv[1] == 'polling':
         except (telegram.error.Unauthorized, telegram.error.BadRequest):
             update_id += 1
     exit()
+
+bot.telegram.setWebhook('https://zuckworkbot.herokuapp.com/webhook')
