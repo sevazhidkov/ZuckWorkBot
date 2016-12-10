@@ -1,12 +1,17 @@
+import json
+import requests
+
+
 class BackendApi:
+
+
     def get_vacancies(self):
         """Should return list of vacancies names vacancies sorted by popularity"""
-        return ['Software engineer', 'Head of Machine Learning',
-                'Developer Advocate (Cloud Platform)',
-                'Account Executive, Google Cloud Platform',
-                'Global Product Lead, AdWords Interfaces',
-                'Sales Solutions Specialist', 'Brand Strategist, Google Cloud',
-                'Android UX Engineer, Design']
+        all_vacancies = requests.get('http://185.106.143.4:8080/all_jobs').json()
+        divisions = {}
+        for division, group, vacancy in all_vacancies:
+            divisions[division] = divisions.get(division, []) + [vacancy]
+        return divisions
 
     def get_topics(self):
         return ['Python', 'Copywriting', 'Creating bots',

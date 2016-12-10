@@ -32,19 +32,32 @@ class Bot:
     def process_message(self, message):
         handler_name = self.redis.get('user:{}:current_handler'.format(message.from_user.id))
         if not handler_name:
-            keyboard = [[x] for x in self.api.get_vacancies()[:3]]
-            keyboard += [[NEXT_BUTTON]]
+            keyboard = [[x] for x in self.api.get_vacancies().keys()]
             self.redis.set('user:{}:first_vacancy'.format(message.from_user.id), 0)
-            self.redis.set('user:{}:current_handler'.format(message.from_user.id), 'choose_vacancy')
-            message.reply_text('Хэй! Ну что, пропихнуть тебя в Facebook? Кем хочешь стать?',
+            self.redis.set('user:{}:current_handler'.format(message.from_user.id), 'choose_division')
+            message.reply_text('Хэй! Ну что, пропихнуть тебя в Facebook? Где хочешь работать?',
                                reply_markup=telegram.ReplyKeyboardMarkup(keyboard))
             self.redis.set('user:{}:cur_skills'.format(message.from_user.id), json.dumps([]))
             return
 
         handler_name = handler_name.decode('utf-8')
-        if handler_name == 'choose_vacancy' and message.text == NEXT_BUTTON:
-            cur = int(self.redis.get('user:{}:first_vacancy'.format(message.from_user.id)))
+        if handler_name == 'choose_division':
             result = self.api.get_vacancies()
+            if message.text not in result.keys():
+                keyboard = [[x] for x in result.keys()]
+                message.reply_text('Ты о чём?', reply_markup=telegram.ReplyKeyboardMarkup(keyboard))
+                return
+            self.redis.set('user:{}:division'.format(message.from_user.id), message.text)
+            keyboard = [[x] for x in result[message.text][0:3]]
+            keyboard += [[NEXT_BUTTON]]
+            self.redis.set('user:{}:current_handler'.format(message.from_user.id), 'choose_vacancy')
+            message.reply_text('Окей, а кем хочешь работать?',
+                               reply_markup=telegram.ReplyKeyboardMarkup(keyboard))
+            return
+        if handler_name == 'choose_vacancy' and message.text == NEXT_BUTTON:
+            user_division = self.redis.get('user:{}:division'.format(message.from_user.id)).decode('utf-8')
+            cur = int(self.redis.get('user:{}:first_vacancy'.format(message.from_user.id)))
+            result = self.api.get_vacancies()[user_division]
             keyboard = [[x] for x in result[cur + 3:cur + 6]]
             if len(result) > cur + 6:
                 keyboard += [[PREVIOUS_BUTTON, NEXT_BUTTON]]
@@ -55,8 +68,9 @@ class Bot:
                                reply_markup=telegram.ReplyKeyboardMarkup(keyboard))
             return
         if handler_name == 'choose_vacancy' and message.text == PREVIOUS_BUTTON:
+            user_division = self.redis.get('user:{}:division'.format(message.from_user.id)).decode('utf-8')
             cur = int(self.redis.get('user:{}:first_vacancy'.format(message.from_user.id)))
-            keyboard = [[x] for x in self.api.get_vacancies()[cur - 3:cur]]
+            keyboard = [[x] for x in self.api.get_vacancies()[user_division][cur - 3:cur]]
             if cur - 3 != 0:
                 keyboard += [[PREVIOUS_BUTTON, NEXT_BUTTON]]
             else:
@@ -66,13 +80,15 @@ class Bot:
                                reply_markup=telegram.ReplyKeyboardMarkup(keyboard))
             return
         if handler_name == 'choose_vacancy':
-            if message.text not in self.api.get_vacancies():
-                keyboard = [[x] for x in self.api.get_vacancies()[:3]]
+            user_division = self.redis.get('user:{}:division'.format(message.from_user.id)).decode('utf-8')
+            if message.text not in self.api.get_vacancies()[user_division]:
+                keyboard = [[x] for x in self.api.get_vacancies()[user_division][:3]]
                 keyboard += [[NEXT_BUTTON]]
                 self.redis.set('user:{}:first_vacancy'.format(message.from_user.id), 0)
                 message.reply_text('Ты о чём?',
                                    reply_markup=telegram.ReplyKeyboardMarkup(keyboard))
                 return
+            message.reply_text('Отлично, мне давно нужны были такие специалисты ')
             self.redis.set('user:{}:vacancy'.format(message.from_user.id), message.text)
             self.redis.set('user:{}:current_handler'.format(message.from_user.id), 'choose_skills')
             result = self.api.get_topics()
