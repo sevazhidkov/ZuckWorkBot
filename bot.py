@@ -94,8 +94,8 @@ class Bot:
             result = self.api.get_topics()
             keyboard = [[x] for x in result]
             keyboard += [[THATS_ALL_BUTTON]]
-            message.reply_text('Выбери какими навыками и знаниями ты уже владеешь, чтобы '
-                               'я мог построить программу специально для тебя',
+            message.reply_text('Выбери, в каких областях у тебя есть опыт, '
+                               'чтобы я построил программу обучения специально для тебя',
                                reply_markup=telegram.ReplyKeyboardMarkup(keyboard))
             return
 
@@ -124,7 +124,7 @@ class Bot:
 
         if handler_name == 'choose_skills':
             message.reply_text('Офигенно, ты многого добьешься ❤️', reply_markup=telegram.ReplyKeyboardHide())
-            message.reply_text('Сейчас я подумаю и построю тебе индивидуальную программу 🤔',
+            message.reply_text('Сейчас я подумаю и построю тебе индивидуальную программу',
                                reply_markup=telegram.ReplyKeyboardHide())
             vacancy = self.redis.get('user:{}:vacancy'.format(message.from_user.id)).decode('utf-8')
             saved_skills = json.loads(
@@ -139,8 +139,8 @@ class Bot:
                         [telegram.InlineKeyboardButton(NEXT_BUTTON, callback_data='next')]]
             message.reply_text(COURSE_MESSAGE.format(
                 title=result[0]['title'],
-                time=result[0]['time'],
-                language=result[0]['language'],
+                time=result[0]['Commitment'],
+                language=result[0]['Language'],
                 link=result[0]['link']
             ), reply_markup=telegram.InlineKeyboardMarkup(keyboard), parse_mode='markdown')
 
@@ -156,11 +156,12 @@ class Bot:
                 self.redis.get('user:{}:program'.format(query.from_user.id)).decode('utf-8')
             )
             cur = int(self.redis.get('user:{}:cur'.format(query.from_user.id))) - 1
+        print(result[cur])
         bot.telegram.editMessageText(
             text=COURSE_MESSAGE.format(
                 title=result[cur]['title'],
-                time=result[cur]['time'],
-                language=result[cur]['language'],
+                time=result[cur].get('Commitment', ''),
+                language=result[cur]['Language'],
                 link=result[cur]['link']
             ),
             parse_mode=telegram.ParseMode.MARKDOWN,

@@ -3,7 +3,14 @@ import requests
 
 
 class BackendApi:
-
+    CLUSTER_NAMES = ['DevOps', 'Management & Communications',
+                     'Predictive Analytics', 'Research', 'Art',
+                     'Product', 'HR', 'Leadership',
+                     'Legal & Audit', 'Strategy', 'Materials & Manufacturing',
+                     'Marketing', 'Hardware', 'Data science', 'Communications',
+                     'Sales', 'Machine learning', 'Infrasctructure',
+                     'Networks & Systems', 'Architecture'
+                     ]
 
     def get_vacancies(self):
         """Should return list of vacancies names vacancies sorted by popularity"""
@@ -14,20 +21,21 @@ class BackendApi:
         return divisions
 
     def get_topics(self):
-        return ['Python', 'Copywriting', 'Creating bots',
-                'Sleeping', 'Hacking', 'Eating']
+        return self.CLUSTER_NAMES
 
     def generate_program(self, vacancy, skills):
         print(vacancy, skills) # Developer Advocate (Cloud Platform) ['Copywriting', 'Sleeping']
-        return [{'title': 'Using Databases with Python',
-                 'time': '5 weeks of study, 2-3 hours/week',
-                 'language': 'English',
-                 'link': 'https://ru.coursera.org/learn/python-databases'},
-                {'title': 'Lulz and smehuechki',
-                 'time': '5 weeks of study, 2-3 hours/week',
-                 'language': 'English',
-                 'link': 'https://ru.coursera.org/learn/python-databases'},
-                {'title': 'Using Databases with Python',
-                 'time': '5 weeks of study, 2-3 hours/week',
-                 'language': 'English',
-                 'link': 'https://ru.coursera.org/learn/python-databases'}]
+        vec = []
+        for skill in self.CLUSTER_NAMES:
+            if skill in skills:
+                vec.append(1)
+            else:
+                vec.append(0)
+        result = requests.get(
+            'http://185.106.143.4:8080/recommend/{}&{}'.format(
+                ','.join(map(str, vec)),
+                vacancy
+            )
+        ).json()
+        print(result[0])
+        return result
