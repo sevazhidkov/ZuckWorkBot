@@ -139,7 +139,7 @@ class Bot:
                         [telegram.InlineKeyboardButton(NEXT_BUTTON, callback_data='next')]]
             message.reply_text(COURSE_MESSAGE.format(
                 title=result[0]['title'],
-                time=result[0]['Commitment'],
+                time=result[0].get('Commitment', '4 weeks'),
                 language=result[0]['Language'],
                 link=result[0]['link']
             ), reply_markup=telegram.InlineKeyboardMarkup(keyboard), parse_mode='markdown')
@@ -160,7 +160,7 @@ class Bot:
         bot.telegram.editMessageText(
             text=COURSE_MESSAGE.format(
                 title=result[cur]['title'],
-                time=result[cur].get('Commitment', ''),
+                time=result[cur].get('Commitment', '4 weeks'),
                 language=result[cur]['Language'],
                 link=result[cur]['link']
             ),
