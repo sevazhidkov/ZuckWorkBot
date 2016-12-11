@@ -125,7 +125,7 @@ class Bot:
         if handler_name == 'choose_skills':
             message.reply_text('Офигенно, ты многого добьешься ❤️', reply_markup=telegram.ReplyKeyboardHide())
             message.reply_text('Сейчас я подумаю и построю тебе индивидуальную программу',
-                               reply_markup=telegram.ReplyKeyboardHide())
+                               reply_markup=telegram.ReplyKeyboardMarkup([['Ещё раз']]))
             vacancy = self.redis.get('user:{}:vacancy'.format(message.from_user.id)).decode('utf-8')
             saved_skills = json.loads(
                 self.redis.get('user:{}:cur_skills'.format(message.from_user.id)).decode('utf-8')
