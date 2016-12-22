@@ -14,7 +14,7 @@ class BackendApi:
 
     def get_vacancies(self):
         """Should return list of vacancies names vacancies sorted by popularity"""
-        all_vacancies = requests.get('http://185.106.143.4:8080/all_jobs').json()
+        all_vacancies = requests.get('http://95.213.203.31:7000/all_jobs').json()
         divisions = {}
         for division, group, vacancy in all_vacancies:
             divisions[division] = divisions.get(division, []) + [vacancy]
@@ -32,7 +32,7 @@ class BackendApi:
             else:
                 vec.append(0)
         result = requests.get(
-            'http://185.106.143.4:8080/recommend/{}&{}'.format(
+            'http://95.213.203.31:7000/recommend/{}&{}'.format(
                 ','.join(map(str, vec)),
                 vacancy
             )
